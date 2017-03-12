@@ -122,9 +122,8 @@ private:
     }
 
     if (print_response_) {
-      const char *const data(ba::buffer_cast< const char * >(buffer_.data()));
-      const std::size_t size(bytes - 2);
-      ROS_INFO_STREAM(" > " << std::string(data, size));
+      ROS_INFO_STREAM(
+          " > " << std::string(ba::buffer_cast< const char * >(buffer_.data()), bytes - 2));
     }
 
     buffer_.consume(bytes);
@@ -169,9 +168,8 @@ private:
     }
 
     if (print_response_) {
-      const char *const data(ba::buffer_cast< const char * >(buffer_.data()));
-      const std::size_t size(bytes - 2);
-      ROS_INFO_STREAM(" > " << std::string(data, size));
+      ROS_INFO_STREAM(
+          " > " << std::string(ba::buffer_cast< const char * >(buffer_.data()), bytes - 2));
     }
 
     buffer_.consume(bytes);
