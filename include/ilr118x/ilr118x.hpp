@@ -39,7 +39,7 @@ public:
       : serial_(service), timer_(service) {
     // load parameters
     device_ = rp::param< std::string >(rn::append(ns, "device"), "/dev/ttyUSB0");
-    timeout_ = ros::Duration(rp::param(rn::append(ns, "timeout"), 5.)).toBoost();
+    timeout_ = ros::Duration(rp::param(rn::append(ns, "timeout"), 3.)).toBoost();
     print_response_ = rp::param(rn::append(ns, "print_response"), false);
     frame_id_ = rp::param< std::string >(rn::append(ns, "frame_id"), "ilr118x");
 
