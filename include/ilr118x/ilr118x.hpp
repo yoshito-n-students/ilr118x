@@ -16,13 +16,15 @@
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_error.hpp>
 
+#include <ilr118x_msgs/Distance.h>
+
 #include <ros/console.h>
 #include <ros/duration.h>
 #include <ros/names.h>
 #include <ros/node_handle.h>
 #include <ros/param.h>
 #include <ros/publisher.h>
-#include <std_msgs/Float64.h>
+#include <ros/time.h>
 
 namespace ilr118x {
 
@@ -38,9 +40,11 @@ public:
     // load parameters
     device_ = rp::param< std::string >(rn::append(ns, "device"), "/dev/ttyUSB0");
     timeout_ = ros::Duration(rp::param(rn::append(ns, "timeout"), 5.)).toBoost();
+    print_response_ = rp::param(rn::append(ns, "print_response"), false);
+    frame_id_ = rp::param< std::string >(rn::append(ns, "frame_id"), "ilr118x");
 
     // create a ros topic
-    publisher_ = handle.advertise< std_msgs::Float64 >("distance", 1);
+    publisher_ = handle.advertise< ilr118x_msgs::Distance >("distance", 1);
 
     // start the operation
     start();
@@ -117,13 +121,11 @@ private:
       return;
     }
 
-    /*
-    {
+    if (print_response_) {
       const char *const data(ba::buffer_cast< const char * >(buffer_.data()));
       const std::size_t size(bytes - 2);
       ROS_INFO_STREAM(" > " << std::string(data, size));
     }
-    */
 
     buffer_.consume(bytes);
 
@@ -166,7 +168,7 @@ private:
       return;
     }
 
-    {
+    if (print_response_) {
       const char *const data(ba::buffer_cast< const char * >(buffer_.data()));
       const std::size_t size(bytes - 2);
       ROS_INFO_STREAM(" > " << std::string(data, size));
@@ -198,17 +200,18 @@ private:
       return;
     }
 
-    startReadStreamResponse();
+    startReadStreamResponse(0);
   }
 
-  void startReadStreamResponse() {
+  void startReadStreamResponse(const std::size_t seq) {
     timer_.expires_from_now(timeout_);
     timer_.async_wait(boost::bind(&ILR118x::handleTimeout, this, _1));
     ba::async_read_until(serial_, buffer_, "\r\n",
-                         boost::bind(&ILR118x::handleReadStreamResponse, this, _1, _2));
+                         boost::bind(&ILR118x::handleReadStreamResponse, this, seq, _1, _2));
   }
 
-  void handleReadStreamResponse(const bs::error_code &error, const std::size_t bytes) {
+  void handleReadStreamResponse(const std::size_t seq, const bs::error_code &error,
+                                const std::size_t bytes) {
     timer_.cancel();
 
     if (error) {
@@ -219,19 +222,28 @@ private:
 
     // parse the response
     {
-      // access the response string except the delimiter
-      const char *const data(ba::buffer_cast< const char * >(buffer_.data()));
-      const std::size_t size(bytes - 2);
-      // print the response string for debug
-      ROS_INFO_STREAM(" > " << std::string(data, size));
-      // convert the reponse string to a number
-      std_msgs::Float64 distance;
-      if (boost::conversion::try_lexical_convert(data, size, distance.data)) {
-        // publish the distance value
+      // copy the response from the buffer except the delimiters
+      const std::string response(ba::buffer_cast< const char * >(buffer_.data()), bytes - 2);
+      // print the response string if needed
+      if (print_response_) {
+        ROS_INFO_STREAM(" > " << response);
+      }
+      // publish the response if needed
+      if (publisher_.getNumSubscribers() > 0) {
+        // convert the reponse to a ros message
+        ilr118x_msgs::Distance distance;
+        distance.header.seq = seq;
+        distance.header.stamp = ros::Time::now();
+        distance.header.frame_id = frame_id_;
+        distance.distance = -1.;
+        distance.error_code = ilr118x_msgs::Distance::UNKNOWN_ERROR;
+        if (boost::conversion::try_lexical_convert(response, distance.distance)) {
+          distance.error_code = ilr118x_msgs::Distance::SUCCESS;
+        } else if (response == "E61") {
+          distance.error_code = ilr118x_msgs::Distance::UNKNOWN_COMMAND;
+        } // TODO: support all errors defined in an official manual
+        // publish the message
         publisher_.publish(distance);
-      } else {
-        ROS_WARN_STREAM("On parsing stream response: "
-                        << "bad conversion: " << std::string(data, size));
       }
     }
 
@@ -239,7 +251,7 @@ private:
     buffer_.consume(bytes);
 
     // receive the next response
-    startReadStreamResponse();
+    startReadStreamResponse(seq + 1);
   }
 
   void handleTimeout(const bs::error_code &error) {
@@ -277,6 +289,8 @@ private:
   // parameters
   std::string device_;
   ba::deadline_timer::duration_type timeout_;
+  bool print_response_;
+  std::string frame_id_;
 
   // sensor drivers
   ba::serial_port serial_;
