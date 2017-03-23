@@ -237,9 +237,42 @@ private:
         distance.error_code = ilr118x_msgs::Distance::UNKNOWN_ERROR;
         if (boost::conversion::try_lexical_convert(response, distance.distance)) {
           distance.error_code = ilr118x_msgs::Distance::SUCCESS;
+        } else if (response == "E15") {
+          distance.error_code = ilr118x_msgs::Distance::POOR_REFLEXES;
+        } else if (response == "E16") {
+          distance.error_code = ilr118x_msgs::Distance::STRONG_REFLEXES;
+        } else if (response == "E17") {
+          distance.error_code = ilr118x_msgs::Distance::STEADY_LIGHT;
+        } else if (response == "E18") {
+          distance.error_code = ilr118x_msgs::Distance::DISTANCE_DIFFERENCE;
+        } else if (response == "E19") {
+          distance.error_code = ilr118x_msgs::Distance::HIGH_TARGET_SPEED;
+        } else if (response == "E23") {
+          distance.error_code = ilr118x_msgs::Distance::LOW_TEMPERATURE;
+        } else if (response == "E24") {
+          distance.error_code = ilr118x_msgs::Distance::HIGH_TEMPERATURE;
+        } else if (response == "E31") {
+          distance.error_code = ilr118x_msgs::Distance::EEPROM_CHECKSUM;
+        } else if (response == "E51") {
+          distance.error_code = ilr118x_msgs::Distance::SET_LASER_VOLTAGE;
+        } else if (response == "E52") {
+          distance.error_code = ilr118x_msgs::Distance::LASER_CURRENT;
+        } else if (response == "E53") {
+          distance.error_code = ilr118x_msgs::Distance::BAD_PARAMETERS;
+        } else if (response == "E54") {
+          distance.error_code = ilr118x_msgs::Distance::HARDWARE_54;
+        } else if (response == "E55") {
+          distance.error_code = ilr118x_msgs::Distance::HARDWARE_55;
         } else if (response == "E61") {
-          distance.error_code = ilr118x_msgs::Distance::UNKNOWN_COMMAND;
-        } // TODO: support all errors defined in an official manual
+          distance.error_code = ilr118x_msgs::Distance::INVALID_COMMAND;
+        } else if (response == "E62") {
+          distance.error_code = ilr118x_msgs::Distance::HARDWARE_OR_PARITY;
+        } else if (response == "E63") {
+          distance.error_code = ilr118x_msgs::Distance::BUFFER_OVERFLOW;
+        } else if (response == "E64") {
+          distance.error_code = ilr118x_msgs::Distance::FRAMING_ERROR;
+        }
+
         // publish the message
         publisher_.publish(distance);
       }
