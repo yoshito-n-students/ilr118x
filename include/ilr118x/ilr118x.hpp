@@ -198,18 +198,17 @@ private:
       return;
     }
 
-    startReadStreamResponse(0);
+    startReadStreamResponse();
   }
 
-  void startReadStreamResponse(const std::size_t seq) {
+  void startReadStreamResponse() {
     timer_.expires_from_now(timeout_);
     timer_.async_wait(boost::bind(&ILR118x::handleTimeout, this, _1));
     ba::async_read_until(serial_, buffer_, "\r\n",
-                         boost::bind(&ILR118x::handleReadStreamResponse, this, seq, _1, _2));
+                         boost::bind(&ILR118x::handleReadStreamResponse, this, _1, _2));
   }
 
-  void handleReadStreamResponse(const std::size_t seq, const bs::error_code &error,
-                                const std::size_t bytes) {
+  void handleReadStreamResponse(const bs::error_code &error, const std::size_t bytes) {
     timer_.cancel();
 
     if (error) {
@@ -230,7 +229,6 @@ private:
       if (publisher_.getNumSubscribers() > 0) {
         // convert the reponse to a ros message
         ilr118x_msgs::Distance distance;
-        distance.header.seq = seq;
         distance.header.stamp = ros::Time::now();
         distance.header.frame_id = frame_id_;
         distance.distance = -1.;
@@ -282,7 +280,7 @@ private:
     buffer_.consume(bytes);
 
     // receive the next response
-    startReadStreamResponse(seq + 1);
+    startReadStreamResponse();
   }
 
   void handleTimeout(const bs::error_code &error) {
