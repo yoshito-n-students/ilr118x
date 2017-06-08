@@ -16,7 +16,7 @@
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_error.hpp>
 
-#include <ilr118x_msgs/Distance.h>
+#include <ilr118x_msgs/Output.h>
 
 #include <ros/console.h>
 #include <ros/duration.h>
@@ -44,7 +44,7 @@ public:
     frame_id_ = rp::param< std::string >(rn::append(ns, "frame_id"), "ilr118x");
 
     // create a ros topic
-    publisher_ = handle.advertise< ilr118x_msgs::Distance >("distance", 1);
+    publisher_ = handle.advertise< ilr118x_msgs::Output >("output", 1);
 
     // start the operation
     start();
@@ -228,51 +228,51 @@ private:
       // publish the response if needed
       if (publisher_.getNumSubscribers() > 0) {
         // convert the reponse to a ros message
-        ilr118x_msgs::Distance distance;
-        distance.header.stamp = ros::Time::now();
-        distance.header.frame_id = frame_id_;
-        distance.distance = -1.;
-        distance.error_code = ilr118x_msgs::Distance::UNKNOWN_ERROR;
-        if (boost::conversion::try_lexical_convert(response, distance.distance)) {
-          distance.error_code = ilr118x_msgs::Distance::SUCCESS;
+        ilr118x_msgs::Output output;
+        output.header.stamp = ros::Time::now();
+        output.header.frame_id = frame_id_;
+        output.distance = -1.;
+        output.error_code = ilr118x_msgs::Output::UNKNOWN_ERROR;
+        if (boost::conversion::try_lexical_convert(response, output.distance)) {
+          output.error_code = ilr118x_msgs::Output::SUCCESS;
         } else if (response == "E15") {
-          distance.error_code = ilr118x_msgs::Distance::POOR_REFLEXES;
+          output.error_code = ilr118x_msgs::Output::POOR_REFLEXES;
         } else if (response == "E16") {
-          distance.error_code = ilr118x_msgs::Distance::STRONG_REFLEXES;
+          output.error_code = ilr118x_msgs::Output::STRONG_REFLEXES;
         } else if (response == "E17") {
-          distance.error_code = ilr118x_msgs::Distance::STEADY_LIGHT;
+          output.error_code = ilr118x_msgs::Output::STEADY_LIGHT;
         } else if (response == "E18") {
-          distance.error_code = ilr118x_msgs::Distance::DISTANCE_DIFFERENCE;
+          output.error_code = ilr118x_msgs::Output::DISTANCE_DIFFERENCE;
         } else if (response == "E19") {
-          distance.error_code = ilr118x_msgs::Distance::HIGH_TARGET_SPEED;
+          output.error_code = ilr118x_msgs::Output::HIGH_TARGET_SPEED;
         } else if (response == "E23") {
-          distance.error_code = ilr118x_msgs::Distance::LOW_TEMPERATURE;
+          output.error_code = ilr118x_msgs::Output::LOW_TEMPERATURE;
         } else if (response == "E24") {
-          distance.error_code = ilr118x_msgs::Distance::HIGH_TEMPERATURE;
+          output.error_code = ilr118x_msgs::Output::HIGH_TEMPERATURE;
         } else if (response == "E31") {
-          distance.error_code = ilr118x_msgs::Distance::EEPROM_CHECKSUM;
+          output.error_code = ilr118x_msgs::Output::EEPROM_CHECKSUM;
         } else if (response == "E51") {
-          distance.error_code = ilr118x_msgs::Distance::SET_LASER_VOLTAGE;
+          output.error_code = ilr118x_msgs::Output::SET_LASER_VOLTAGE;
         } else if (response == "E52") {
-          distance.error_code = ilr118x_msgs::Distance::LASER_CURRENT;
+          output.error_code = ilr118x_msgs::Output::LASER_CURRENT;
         } else if (response == "E53") {
-          distance.error_code = ilr118x_msgs::Distance::BAD_PARAMETERS;
+          output.error_code = ilr118x_msgs::Output::BAD_PARAMETERS;
         } else if (response == "E54") {
-          distance.error_code = ilr118x_msgs::Distance::HARDWARE_54;
+          output.error_code = ilr118x_msgs::Output::HARDWARE_54;
         } else if (response == "E55") {
-          distance.error_code = ilr118x_msgs::Distance::HARDWARE_55;
+          output.error_code = ilr118x_msgs::Output::HARDWARE_55;
         } else if (response == "E61") {
-          distance.error_code = ilr118x_msgs::Distance::INVALID_COMMAND;
+          output.error_code = ilr118x_msgs::Output::INVALID_COMMAND;
         } else if (response == "E62") {
-          distance.error_code = ilr118x_msgs::Distance::HARDWARE_OR_PARITY;
+          output.error_code = ilr118x_msgs::Output::HARDWARE_OR_PARITY;
         } else if (response == "E63") {
-          distance.error_code = ilr118x_msgs::Distance::BUFFER_OVERFLOW;
+          output.error_code = ilr118x_msgs::Output::BUFFER_OVERFLOW;
         } else if (response == "E64") {
-          distance.error_code = ilr118x_msgs::Distance::FRAMING_ERROR;
+          output.error_code = ilr118x_msgs::Output::FRAMING_ERROR;
         }
 
         // publish the message
-        publisher_.publish(distance);
+        publisher_.publish(output);
       }
     }
 
