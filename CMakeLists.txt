@@ -11,13 +11,14 @@ find_package(
   catkin REQUIRED COMPONENTS
   ilr118x_msgs
   roscpp
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(
   Boost REQUIRED COMPONENTS 
   system
-  )
+)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -108,7 +109,7 @@ find_package(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES ilr118x
-  CATKIN_DEPENDS ilr118x_msgs roscpp
+  CATKIN_DEPENDS ilr118x_msgs roscpp sensor_msgs
 #  DEPENDS system_lib
 )
 
@@ -140,7 +141,7 @@ include_directories(
 add_executable(
   ilr118x_node 
   src/ilr118x_node.cpp
-  )
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -153,14 +154,14 @@ add_executable(
 add_dependencies(
   ilr118x_node
   ilr118x_msgs_generate_messages_cpp
-  )
+)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
   ilr118x_node
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  )
+)
 
 #############
 ## Install ##

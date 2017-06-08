@@ -1,6 +1,7 @@
 #ifndef ILR118X_ILR118X
 #define ILR118X_ILR118X
 
+#include <limits>
 #include <string>
 
 #include <boost/asio/buffer.hpp>
@@ -25,6 +26,7 @@
 #include <ros/param.h>
 #include <ros/publisher.h>
 #include <ros/time.h>
+#include <sensor_msgs/Range.h>
 
 namespace ilr118x {
 
@@ -44,7 +46,8 @@ public:
     frame_id_ = rp::param< std::string >(rn::append(ns, "frame_id"), "ilr118x");
 
     // create a ros topic
-    publisher_ = handle.advertise< ilr118x_msgs::Output >("output", 1);
+    output_publisher_ = handle.advertise< ilr118x_msgs::Output >("output", 1);
+    range_publisher_ = handle.advertise< sensor_msgs::Range >("range", 1);
 
     // start the operation
     start();
@@ -221,17 +224,19 @@ private:
     {
       // copy the response from the buffer except the delimiters
       const std::string response(ba::buffer_cast< const char * >(buffer_.data()), bytes - 2);
+
       // print the response string if needed
       if (print_response_) {
         ROS_INFO_STREAM(" > " << response);
       }
-      // publish the response if needed
-      if (publisher_.getNumSubscribers() > 0) {
+
+      // publish the response in a raw format if needed
+      if (output_publisher_.getNumSubscribers() > 0) {
         // convert the reponse to a ros message
         ilr118x_msgs::Output output;
         output.header.stamp = ros::Time::now();
         output.header.frame_id = frame_id_;
-        output.distance = -1.;
+        output.distance = std::numeric_limits< float >::quiet_NaN();
         output.error_code = ilr118x_msgs::Output::UNKNOWN_ERROR;
         if (boost::conversion::try_lexical_convert(response, output.distance)) {
           output.error_code = ilr118x_msgs::Output::SUCCESS;
@@ -272,7 +277,22 @@ private:
         }
 
         // publish the message
-        publisher_.publish(output);
+        output_publisher_.publish(output);
+      }
+
+      // publish the response in common format if needed
+      if (range_publisher_.getNumSubscribers() > 0) {
+        sensor_msgs::Range range;
+        range.header.stamp = ros::Time::now();
+        range.header.frame_id = frame_id_;
+        range.radiation_type = sensor_msgs::Range::INFRARED;
+        range.field_of_view = 0.; // TODO: fill right specs of the device
+        range.min_range = 0.;     // TODO: fill right specs of the device
+        range.max_range = 100.;   // TODO: fill right specs of the device
+        range.range = std::numeric_limits< float >::quiet_NaN();
+        boost::conversion::try_lexical_convert(response, range.range);
+
+        range_publisher_.publish(range);
       }
     }
 
@@ -326,8 +346,9 @@ private:
   ba::streambuf buffer_;
   ba::deadline_timer timer_;
 
-  // ros publisher
-  ros::Publisher publisher_;
+  // ros publishers
+  ros::Publisher output_publisher_;
+  ros::Publisher range_publisher_;
 };
 }
 
