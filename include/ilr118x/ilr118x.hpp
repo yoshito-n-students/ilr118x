@@ -283,12 +283,16 @@ private:
       // publish the response in common format if needed
       if (range_publisher_.getNumSubscribers() > 0) {
         sensor_msgs::Range range;
+        // headers
         range.header.stamp = ros::Time::now();
         range.header.frame_id = frame_id_;
+        // specs of the device from
+        // http://www.micro-epsilon.com/download/manuals/man--optoNCDT-ILR-1181-1182--en.pdf
         range.radiation_type = sensor_msgs::Range::INFRARED;
-        range.field_of_view = 0.; // TODO: fill right specs of the device
-        range.min_range = 0.;     // TODO: fill right specs of the device
-        range.max_range = 100.;   // TODO: fill right specs of the device
+        range.field_of_view = 0.0006; // 0.6 mrad
+        range.min_range = 0.;         // 0 m
+        range.max_range = 150.;       // 150 m
+        // measurement
         range.range = std::numeric_limits< float >::quiet_NaN();
         boost::conversion::try_lexical_convert(response, range.range);
 
